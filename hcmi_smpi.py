@@ -65,6 +65,14 @@ def estimate_and_print(selected_features, metric):
     print("   {:>3d},  {:>3d}".format(len(selected_features), f))
     return selected_features
 
+@smpi.root
+def assert_correct_result(selected_features, max_features):
+    expected_features = [241, 338, 378, 105, 472, 475, 433, 64, 128, 442, 453, 336, 48, 493, 281, 318, 153, 28, 451, 455]
+    if expected_features[:max_features] == selected_features:
+        print("correct result computed")
+    else:
+        print("wrong result, or more than 20 features computed")
+
 def main():
     X,Y = load_madelon_data()
     [_, n_features] = X.shape
@@ -75,15 +83,8 @@ def main():
     for i in range(1, max_features):
         [JMI] = calculate_jmi(X, Y, features, selected_features)
         selected_features = estimate_and_print(selected_features, JMI)
+    
+    assert_correct_result(selected_features, max_features)
 
 if __name__ == "__main__":
     main()
-#expected_features=[241, 338, 378, 105, 472, 475, 433, 64, 128, 442, 453, 336, 48, 493, 281, 318, 153, 28, 451, 455]
-#assert(expected_features == selected_features)
-# if rank == 0:
-    # with open("res_float_cmi_mpi.txt","w") as f:
-    # for elem in selected_features:
-    #f.write(str(elem)+ ", ")
-    # f.write("\n")
-    #f.write(MADELON_TRAIN+ "\n")
-    #f.write(MADELON_TRAIN_LABELS + "\n")
