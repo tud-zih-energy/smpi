@@ -9,6 +9,6 @@
 
 Run
 ```
-OMP_NUM_THREADS=1 mpirun -n 8 python cmi_test_hcmi_smpi.py ./MADELON/MADELON/ 20
+OMP_NUM_THREADS=1 mpirun -n 8 python hcmi_smpi.py ./MADELON/MADELON/ 20
 ```
 
