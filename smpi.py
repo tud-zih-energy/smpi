@@ -20,12 +20,46 @@ class dist_type(Enum):
     scatter = 2
     gather = 3
 
-def root(f):
-    log.debug("call root")
-    if rank == 0:
-        return f
-    else:
-        return lambda *data, **data2: None 
+class Singleton(type):
+    _instances = {}
+    def __call__(cls, *args, **kwargs):
+        if cls not in cls._instances:
+            cls._instances[cls] = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls._instances[cls]
+
+class InRoot(metaclass=Singleton):
+    def __init__(self):
+        self.in_root_count = 0
+
+    def __enter__(self):
+        self.in_root_count += 1
+        log.debug("enter: new root count {}".format(self.in_root_count))
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        self.in_root_count -= 1
+        log.debug("exit: new root count {}".format(self.in_root_count))
+
+    def get_state(self):
+        """
+        @return True if in a root region, False otherwise
+        """
+        log.debug("get_state: {}".format(self.in_root_count))
+        return self.in_root_count != 0
+
+def _assert_not_in_root():
+    if InRoot().get_state():
+        raise RuntimeError("Can not call communicating functions while in smpi.root function, this will deadlock")
+
+
+def root(func):
+    def execute_root_only(*args):
+        log.debug("exec root")
+        with InRoot():
+            if rank == 0:
+                return func(*args)
+            else:
+                return None
+    return execute_root_only
 
 @root
 def _calculate_distribution(data):
@@ -54,6 +88,7 @@ def _broadcast_data(data=None):
     '''
     broadcast data to all ranks
     '''
+    _assert_not_in_root()
     recv = comm.bcast(data, root=0)
     return recv
 
@@ -61,9 +96,10 @@ def _scatter_data(data = None):
     '''
     scatterts a numpy 1D array along the available processes 
     '''
+    _assert_not_in_root()
     if data is not None:
         if not isinstance(data, (numpy.ndarray)):
-            raise RuntimeError("currently numpy arrays are supported")
+            raise TypeError("currently numpy arrays are supported")
 
     count = _calculate_distribution(data)
     local_count = comm.scatter(count)
@@ -79,6 +115,7 @@ def _gather_data(data):
     '''
     gathers data into a numpy 1D array from the available processes 
     '''
+    _assert_not_in_root()
     assert len(data) == data.size
     local_count = len(data)
     count = comm.reduce(local_count, op=MPI.SUM)
