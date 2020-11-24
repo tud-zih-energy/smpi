@@ -16,3 +16,6 @@ unzip MADELON.zip
 OMP_NUM_THREADS=1 mpirun -n 8 python hcmi_smpi.py ./MADELON/MADELON/ 20
 ```
 
+## License
+
+If the LGPL is not good License for you, please feel free to write to andreas.gocht@tu-dresden.de
