@@ -23,6 +23,8 @@ Details about Mutual Information and Feature Selection can be found at https://g
 
 ## Usage:
 
+For smpi itself, you only need `mpi4py`. To try the example, you need the following:
+
 * Get Madelon data from: http://clopinet.com/isabelle/Projects/NIPS2003/MADELON.zip
 * place the data in a `MADELON` folder
 * Get and install pymit https://github.com/tud-zih-energy/pymit in your env.
