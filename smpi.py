@@ -144,18 +144,23 @@ def distribute(*dist_types):
     def new_func(func):
         sig = inspect.signature(func)
         assert len(dist_types) == len(sig.parameters)
+
         def distribute_data(*args):
             log.debug("call distribute_data")
             new_args = []
-            for (a, dt) in zip(args, dist_types):
-                if dt == dist_type.broadcast:
-                    a = _broadcast_data(a)
-                elif dt == dist_type.scatter:
-                    a = _scatter_data(a)
-                elif dt == dist_type.local:
-                    a = a
-                new_args.append(a)
+            for (i, (a, dt)) in enumerate(zip(args, dist_types)):
+                try:
+                    if dt == dist_type.broadcast:
+                        a = _broadcast_data(a)
+                    elif dt == dist_type.scatter:
+                        a = _scatter_data(a)
+                    elif dt == dist_type.local:
+                        a = a
+                    new_args.append(a)
+                except TypeError as e:
+                    raise TypeError("on parameter {}".format(i)) from e
             return func(*new_args)
+
         return distribute_data
     return new_func
 
@@ -183,12 +188,15 @@ def collect(*collect_types):
                     result.append(None)
 
             new_result = []
-            for (a, ct) in zip(result, collect_types):
-                if ct == dist_type.gather:
-                    a = _gather_data(a)
-                elif ct == dist_type.broadcast:
-                    a = _broadcast_data(a)
-                new_result.append(a)
+            for (i, (a, ct)) in enumerate(zip(result, collect_types)):
+                try:
+                    if ct == dist_type.gather:
+                        a = _gather_data(a)
+                    elif ct == dist_type.broadcast:
+                        a = _broadcast_data(a)
+                    new_result.append(a)
+                except TypeError as e:
+                    raise TypeError("on parameter {}".format(i)) from e
             return new_result
         return collect_data
     return new_func
