@@ -177,8 +177,7 @@ def collect(*collect_types):
     '''
     log.debug("call collect")
     def new_func(func):
-        sig = inspect.signature(func)
-        assert len(collect_types) == len(sig.parameters) #TODO: schöne fehlermeldung 
+         #TODO: check return parameters in advance?
 
         def collect_data(*args, **kwds):
             log.debug("call collect_data")
@@ -189,10 +188,11 @@ def collect(*collect_types):
                 for ct in collect_types:
                     if not (ct == dist_type.broadcast):
                         raise TypeError("currently results from root have to be broadcasted")
-                    assert ct == dist_type.broadcast
                     result.append(None)
-
             new_result = []
+
+            if not (len(result) == len(collect_types)):
+                raise TypeError("Amount of return values does not match collect dist_types")
             for (i, (a, ct)) in enumerate(zip(result, collect_types)):
                 try:
                     if ct == dist_type.gather:
