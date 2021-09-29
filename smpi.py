@@ -177,6 +177,9 @@ def collect(*collect_types):
     '''
     log.debug("call collect")
     def new_func(func):
+        sig = inspect.signature(func)
+        assert len(collect_types) == len(sig.parameters) #TODO: schöne fehlermeldung 
+
         def collect_data(*args, **kwds):
             log.debug("call collect_data")
             result = func(*args, **kwds)
@@ -184,6 +187,8 @@ def collect(*collect_types):
             if result is None: # if @root has been used
                 result = []
                 for ct in collect_types:
+                    if not (ct == dist_type.broadcast):
+                        raise TypeError("currently results from root have to be broadcasted")
                     assert ct == dist_type.broadcast
                     result.append(None)
 
